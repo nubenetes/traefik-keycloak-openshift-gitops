@@ -1,0 +1,7 @@
+# Sponsor button configuration for GitHub.
+# Uncomment and fill in the platforms you actually use, then the "Sponsor"
+# button appears on the repo. Leaving everything commented shows no button.
+#
+# github: [nubenetes]              # GitHub Sponsors user/org
+# open_collective: nubenetes
+# custom: ["https://nubenetes.example/donate"]

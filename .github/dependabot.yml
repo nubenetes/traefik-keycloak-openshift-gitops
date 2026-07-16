@@ -1,0 +1,18 @@
+# Dependabot — automated dependency update PRs.
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates
+#
+# NOTE: Dependabot does NOT read image tags from Kubernetes manifests or the Helm
+# chart version pinned in argocd/apps/traefik.yaml. It covers GitHub Actions here.
+# For the Traefik chart, oauth2-proxy image and Helm/OCI refs, use Renovate
+# (renovate.json with kubernetes/helm/argocd managers) instead.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "dependencies"
+      - "github-actions"

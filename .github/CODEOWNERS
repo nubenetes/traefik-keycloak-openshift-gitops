@@ -1,0 +1,15 @@
+# Code owners — automatically requested for review on matching paths.
+# Docs: https://docs.github.com/articles/about-code-owners
+#
+# Adjust to a team (e.g. @nubenetes/platform) when one exists.
+
+# Default owner for everything in the repo.
+*                       @inafev
+
+# Area owners (all @inafev for now; split when the team grows).
+/argocd/                @inafev
+/manifests/             @inafev
+/helm/                  @inafev
+/air-gapped/            @inafev
+/docs/                  @inafev
+/.github/               @inafev
