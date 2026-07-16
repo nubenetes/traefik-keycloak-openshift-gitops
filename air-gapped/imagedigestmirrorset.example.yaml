@@ -1,0 +1,41 @@
+# =============================================================================
+# ImageDigestMirrorSet (IDMS) — redirects upstream image pulls to your INTERNAL
+# registry on a disconnected/air-gapped OpenShift cluster. With this in place,
+# the manifests can keep their upstream image references (docker.io/quay.io) and
+# the cluster transparently pulls from the mirror — no per-manifest edits.
+#
+# IDMS is cluster-scoped (config.openshift.io/v1) and applied by a cluster admin
+# (it rolls out via the Machine Config Operator). ICSP is the deprecated
+# equivalent on older clusters (< 4.13).
+#
+# Mirror the images first, e.g.:
+#   oc image mirror docker.io/traefik:v3.7.6 \
+#     registry.internal.example.com/traefik/traefik:v3.7.6
+#   oc image mirror quay.io/oauth2-proxy/oauth2-proxy:v7.7.1 \
+#     registry.internal.example.com/oauth2-proxy/oauth2-proxy:v7.7.1
+# (or use `oc-mirror` with an ImageSetConfiguration for a repeatable pipeline.)
+#
+# Replace registry.internal.example.com with your registry. IDMS matches by
+# repository; digests are preserved, so pin by digest in production.
+# =============================================================================
+apiVersion: config.openshift.io/v1
+kind: ImageDigestMirrorSet
+metadata:
+  name: traefik-dashboard-mirrors
+spec:
+  imageDigestMirrors:
+    # Traefik image (chart default lives on docker.io)
+    - source: docker.io/traefik
+      mirrors:
+        - registry.internal.example.com/traefik
+    # oauth2-proxy image
+    - source: quay.io/oauth2-proxy/oauth2-proxy
+      mirrors:
+        - registry.internal.example.com/oauth2-proxy/oauth2-proxy
+    # (Optional) broad fallbacks if you mirror whole registries:
+    # - source: docker.io
+    #   mirrors:
+    #     - registry.internal.example.com/docker.io
+    # - source: quay.io
+    #   mirrors:
+    #     - registry.internal.example.com/quay.io

@@ -8,6 +8,12 @@ It is managed **outside git** (out-of-band), NOT by ArgoCD — just like
 declarative: the `Certificate` can live in git and cert-manager creates the
 Secret on its own.
 
+> 🔌 **Air-gapped:** ACME / Let's Encrypt **cannot** be used (it needs internet).
+> Use an **internal CA** — option B/C below, or cert-manager with an internal
+> issuer (`CA` ClusterIssuer, your enterprise PKI, or Vault PKI), **not** the
+> ACME issuer. So in the option-A example, `issuerRef` must be your internal
+> issuer.
+
 ## Option A — cert-manager (recommended, GitOps-friendly)
 
 If you have cert-manager + a ClusterIssuer, add this `Certificate` to

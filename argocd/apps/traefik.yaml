@@ -27,7 +27,12 @@ spec:
     # 2) Official Traefik chart, PINNED to a concrete version (GitOps determinism).
     #    41.0.2 => Traefik v3.7.6 (satisfies the >= v3.4 requirement for statusRewrites).
     #    Check versions: helm search repo traefik/traefik --versions
-    - repoURL: https://traefik.github.io/charts
+    #
+    #    AIR-GAPPED: the public repo below is UNREACHABLE from a disconnected
+    #    cluster. Mirror the chart to an internal Helm/OCI repo and point repoURL
+    #    there, e.g.:  registry.internal.example.com/helm-charts  (OCI, no https://)
+    #    See docs/air-gapped.md §2.
+    - repoURL: https://traefik.github.io/charts    # <<< air-gapped: replace with internal mirror
       chart: traefik
       targetRevision: 41.0.2
       helm:

@@ -1,0 +1,74 @@
+name: 🐛 Bug report
+description: Something in the manifests, chart values or docs doesn't work as described.
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a report! This project is **AI-generated
+        and not yet validated on a live cluster**, so concrete reproduction details
+        are especially valuable.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear and concise description of the bug.
+      placeholder: When I sync the `traefik-dashboard` Application, ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: The IngressRoute should route /dashboard to api@internal ...
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Commands, ArgoCD actions, or manifest changes that trigger it.
+      value: |
+        1. `oc apply -k manifests/`
+        2. ...
+        3. See error
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs / output
+      description: e.g. `oc logs deploy/oauth2-proxy`, `argocd app get ...`, Traefik logs.
+      render: shell
+  - type: dropdown
+    id: delivery
+    attributes:
+      label: Delivery path
+      options:
+        - GitOps (ArgoCD)
+        - Imperative (install.sh / oc apply)
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Versions in play.
+      value: |
+        - OpenShift:
+        - ArgoCD / OpenShift GitOps:
+        - Traefik chart / appVersion:
+        - oauth2-proxy:
+        - Keycloak:
+    validations:
+      required: true
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-flight checklist
+      options:
+        - label: I replaced the dummy values (hosts, realm, secrets) from the README §4.
+          required: true
+        - label: I searched existing issues and didn't find a duplicate.
+          required: true

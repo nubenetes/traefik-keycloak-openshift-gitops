@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Questions & discussion
+    url: https://github.com/nubenetes/traefik-keycloak-openshift-gitops/discussions
+    about: Ask usage questions or discuss ideas here instead of opening an issue.
+  - name: 🔐 Report a security issue
+    url: https://github.com/nubenetes/traefik-keycloak-openshift-gitops/security/policy
+    about: Please report vulnerabilities privately — see the security policy.

@@ -1,0 +1,16 @@
+# yamllint configuration — lenient, tuned for Helm values and Kubernetes manifests.
+# Only hard errors fail CI; style issues are warnings.
+extends: relaxed
+
+rules:
+  line-length: disable          # long IngressRoute match rules and comments
+  document-start: disable       # files start with a comment banner, not '---'
+  comments:
+    min-spaces-from-content: 1
+  truthy:
+    # Allow GitHub Actions 'on:' and typical k8s boolean-ish keys without warnings.
+    allowed-values: ["true", "false", "on", "off"]
+    check-keys: false
+
+ignore: |
+  rendered.yaml

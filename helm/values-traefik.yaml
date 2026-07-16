@@ -8,6 +8,14 @@
 #     -n traefik -f helm/values-traefik.yaml
 # =============================================================================
 
+# AIR-GAPPED: with an ImageDigestMirrorSet in place (see air-gapped/), keep the
+# upstream image and the cluster redirects to your mirror. If you prefer explicit
+# references instead, uncomment and point to your internal registry:
+# image:
+#   registry: registry.internal.example.com
+#   repository: traefik/traefik
+#   tag: ""          # defaults to the chart appVersion (v3.7.6)
+
 deployment:
   replicas: 2
 

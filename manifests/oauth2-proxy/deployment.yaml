@@ -33,6 +33,9 @@ spec:
           type: RuntimeDefault
       containers:
         - name: oauth2-proxy
+          # AIR-GAPPED: keep this upstream ref and redirect it with the
+          # ImageDigestMirrorSet (air-gapped/), or replace it with your internal
+          # registry, e.g. registry.internal.example.com/oauth2-proxy/oauth2-proxy:v7.7.1
           image: quay.io/oauth2-proxy/oauth2-proxy:v7.7.1
           args:
             - --http-address=0.0.0.0:4180

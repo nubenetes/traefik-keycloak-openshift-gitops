@@ -116,6 +116,7 @@ argocd app get traefik-dashboard
   (`argocd/project.yaml`): it scopes `sourceRepos`, `destinations` and the
   allowed cluster-scoped resources (Namespace, CRDs, ClusterRole/Binding,
   IngressClass).
-- **Secret in git (optional):** instead of the out-of-band `oc apply`, seal the
-  Secret with `kubeseal` (see `manifests/oauth2-proxy-sealedsecret.example.yaml`)
-  and enable it in `manifests/kustomization.yaml`.
+- **Secrets without git (recommended):** instead of the out-of-band `oc apply`,
+  use HashiCorp Vault + the External Secrets Operator (`manifests/vault/`, guide
+  in `docs/vault-external-secrets.md`) and enable the `vault/` block in
+  `manifests/kustomization.yaml`.

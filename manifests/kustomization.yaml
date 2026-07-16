@@ -23,7 +23,11 @@ resources:
   # Also uncomment the volumes in oauth2-proxy/deployment.yaml.
   # - oauth2-proxy/trusted-ca-configmap.yaml
   #
-  # Optional (secret IN git via Sealed Secrets): generate the real file with
-  # kubeseal (see oauth2-proxy-sealedsecret.example.yaml) and uncomment it. Then
-  # ArgoCD manages the secret and the out-of-band `oc apply` is not needed.
-  # - oauth2-proxy-sealedsecret.yaml
+  # Recommended (secrets from HashiCorp Vault, nothing sensitive in git):
+  # requires the External Secrets Operator + a configured Vault. Uncomment this
+  # block and DROP the out-of-band `oc apply` of oauth2-proxy-secret.
+  # Full setup: docs/vault-external-secrets.md
+  # - vault/serviceaccount.yaml
+  # - vault/secretstore.yaml
+  # - vault/externalsecret-oauth2-proxy.yaml
+  # - vault/externalsecret-dashboard-tls.yaml   # optional (TLS from Vault)

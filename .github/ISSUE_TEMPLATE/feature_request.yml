@@ -1,0 +1,44 @@
+name: ✨ Feature request
+description: Suggest an improvement — a new option, a hardening step, better docs.
+labels: ["enhancement", "triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What are you trying to do that the project doesn't support today?
+      placeholder: I'd like to manage the TLS cert declaratively with cert-manager ...
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What should change? New manifest, value, Application, doc section?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - ArgoCD / GitOps
+        - Traefik chart / values
+        - oauth2-proxy / Keycloak
+        - Kustomize manifests
+        - Secrets (Vault / External Secrets)
+        - CI / tooling
+        - Documentation
+    validations:
+      required: true
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I'm willing to open a PR for this.

@@ -2,6 +2,7 @@
 
 <!-- Repository / meta badges -->
 <p align="center">
+  <a href="https://github.com/nubenetes/traefik-keycloak-openshift-gitops/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/nubenetes/traefik-keycloak-openshift-gitops/actions/workflows/ci.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/github/license/nubenetes/traefik-keycloak-openshift-gitops?color=blue"></a>
   <img alt="Last commit" src="https://img.shields.io/github/last-commit/nubenetes/traefik-keycloak-openshift-gitops">
   <img alt="Repo size" src="https://img.shields.io/github/repo-size/nubenetes/traefik-keycloak-openshift-gitops">
@@ -25,6 +26,8 @@
 <!-- Tech-stack badges -->
 <p align="center">
   <img alt="OpenShift 4.20+" src="https://img.shields.io/badge/OpenShift-4.20%2B-EE0000?logo=redhatopenshift&logoColor=white">
+  <img alt="On-prem" src="https://img.shields.io/badge/deployment-on--prem-455A64">
+  <img alt="Air-gapped / disconnected" src="https://img.shields.io/badge/network-air--gapped%20%2F%20disconnected-B71C1C">
   <img alt="Traefik v3.7.6" src="https://img.shields.io/badge/Traefik-v3.7.6-24A1C1?logo=traefikproxy&logoColor=white">
   <img alt="Keycloak OIDC" src="https://img.shields.io/badge/Keycloak-OIDC-4D4D4D?logo=keycloak&logoColor=white">
   <img alt="Argo CD App-of-Apps" src="https://img.shields.io/badge/Argo%20CD-App--of--Apps-EF7B4D?logo=argo&logoColor=white">
@@ -34,7 +37,9 @@
   <img alt="oauth2-proxy v7.7.1" src="https://img.shields.io/badge/oauth2--proxy-v7.7.1-1E4B8F">
   <img alt="MetalLB LoadBalancer" src="https://img.shields.io/badge/MetalLB-LoadBalancer-0080FF">
   <img alt="SSO: OIDC + ForwardAuth" src="https://img.shields.io/badge/SSO-OIDC%20%2B%20ForwardAuth-2C3E50">
-  <img alt="Sealed Secrets ready" src="https://img.shields.io/badge/Sealed%20Secrets-ready-841D5A">
+  <img alt="TLS: internal CA (no ACME)" src="https://img.shields.io/badge/TLS-internal%20CA%20·%20no%20ACME-006064">
+  <img alt="HashiCorp Vault" src="https://img.shields.io/badge/HashiCorp%20Vault-secrets-FFEC6E?logo=vault&logoColor=black">
+  <img alt="External Secrets Operator" src="https://img.shields.io/badge/External%20Secrets-Operator-5B4FC6">
   <img alt="GitOps" src="https://img.shields.io/badge/GitOps-declarative-1A73E8">
 </p>
 
@@ -52,6 +57,14 @@ Reference deployment of the **official Traefik Helm chart** exposed through
 Keycloak** via **oauth2-proxy + ForwardAuth** and **restricted by role**
 (`traefik-admin`).
 
+> 🏢🔌 **Target platform: on-premises, disconnected (air-gapped) OpenShift
+> Container Platform (OCP 4.20+).** There is **no internet egress** — hence
+> **MetalLB** for load-balancing (no cloud LoadBalancer), and **internal mirrors**
+> for Helm charts, container images and Operators. Keycloak, Vault and DNS are
+> all **internal/on-prem**, and TLS uses an **internal CA** (no ACME/Let's
+> Encrypt). See [§10 Air-gapped](#10-air-gapped--disconnected-on-prem) and
+> [`docs/air-gapped.md`](docs/air-gapped.md).
+
 Ships two delivery paths that share the same manifests and values:
 
 - **GitOps with ArgoCD** (recommended): `argocd/` — App-of-Apps pattern.
@@ -68,23 +81,121 @@ Ships two delivery paths that share the same manifests and values:
 7. [Decommission (uninstall)](#7-decommission-uninstall)
 8. [Operations & troubleshooting](#8-operations--troubleshooting)
 9. [GitOps with ArgoCD](#9-gitops-with-argocd)
+10. [Air-gapped / disconnected (on-prem)](#10-air-gapped--disconnected-on-prem)
 
 ---
 
 ## 1. Architecture
 
-**Components:**
+<details>
+<summary><b>🗺️ Full architecture — delivery (GitOps) + runtime, all components (click to expand)</b></summary>
 
 ```mermaid
-flowchart LR
-    user([Browser]) -->|":443 TLS terminates in Traefik"| traefik["Traefik<br/>(websecure)"]
-    metallb["MetalLB<br/>LoadBalancer (external IP)"] --- traefik
-    traefik -->|"IngressRoute /dashboard, /api"| dash["api@internal<br/>(dashboard)"]
-    traefik -->|"IngressRoute /oauth2/*"| o2p["oauth2-proxy"]
-    o2p -->|"OIDC"| kc[("Keycloak")]
+flowchart TB
+    subgraph EXT["🌐 On-prem systems · air-gapped"]
+      direction TB
+      BROWSER["Browser"]
+      DNS["DNS · A record"]
+      KC["Keycloak · OIDC IdP"]
+      VAULT[("HashiCorp Vault · KV v2")]
+      MIRROR["Internal mirror<br>image registry + Helm/OCI"]
+    end
+    subgraph GIT["🔁 GitOps · ArgoCD"]
+      direction TB
+      REPO[("Git repo")]
+      ROOT["root-app · App-of-Apps"]
+      PROJ["AppProject · traefik"]
+      APPT["App: traefik · Helm 41.0.2"]
+      APPD["App: traefik-dashboard · Kustomize"]
+      REPO --> ROOT --> APPT & APPD
+      PROJ -. scopes .-> APPT & APPD
+    end
+
+  subgraph NS["🟦 OpenShift — namespace: traefik"]
+    direction TB
+    MLB["MetalLB · LoadBalancer"]
+    TRAEFIK["Traefik · web:80→443 · websecure:443 TLS"]
+    subgraph RT["Traefik CRDs · routing"]
+      direction TB
+      IRD["IngressRoute<br>/dashboard · /api"]
+      MERR["Middleware<br>oauth-errors"]
+      MAUTH["Middleware<br>oauth-auth"]
+      IRO["IngressRoute<br>/oauth2/*"]
+    end
+    API["api@internal · Dashboard"]
+    O2P["oauth2-proxy · :4180"]
+    subgraph ESOG["🟩 External Secrets Operator"]
+      direction TB
+      SS["SecretStore → Vault"]
+      ES["ExternalSecret"]
+      ESO["ESO controller"]
+    end
+    subgraph SEC["🔑 Secrets · materialized in-cluster"]
+      direction TB
+      SECRET["oauth2-proxy-secret"]
+      TLS["traefik-dashboard-tls"]
+    end
+    MLB --> TRAEFIK
+    TRAEFIK --> IRD --> MERR --> MAUTH --> API
+    TRAEFIK --> IRO --> O2P
+    MAUTH -. forwardAuth .-> O2P
+    O2P -. reads .-> SECRET
+    TRAEFIK -. TLS .-> TLS
+    SS --> ESO
+    ES --> ESO
+    ESO -->|creates| SECRET
+  end
+
+  BROWSER --> DNS --> MLB
+  O2P -->|OIDC| KC
+  ESO -. "k8s auth" .-> VAULT
+  VAULT -. values .-> ESO
+  APPT -. helm .-> TRAEFIK
+  APPD -. kustomize .-> O2P
+  MIRROR -. "charts + images (no internet)" .-> APPT
+  MIRROR -. images .-> O2P
+  %% invisible links to compress width (stack blocks vertically)
+  EXT ~~~ GIT
+  IRD ~~~ IRO
+  SS ~~~ ES
+  API ~~~ SS
+
+  classDef ext fill:#ECEFF1,stroke:#607D8B,color:#111;
+  classDef idp fill:#F8D7DA,stroke:#C0392B,color:#111;
+  classDef vault fill:#FFF3CD,stroke:#E0A800,color:#111;
+  classDef mirror fill:#E0F2F1,stroke:#00695C,color:#111;
+  classDef gitops fill:#DDE8FF,stroke:#3B6FD4,color:#111;
+  classDef lb fill:#B2DFDB,stroke:#00897B,color:#111;
+  classDef proxy fill:#CDEDF6,stroke:#1E8AA8,color:#111;
+  classDef crd fill:#E8E0FF,stroke:#7C4DFF,color:#111;
+  classDef app fill:#FFE0B2,stroke:#EF7B4D,color:#111;
+  classDef eso fill:#D7F5DD,stroke:#2E9E5B,color:#111;
+  classDef secret fill:#FCE1F0,stroke:#C2185B,color:#111;
+
+  class BROWSER,DNS ext;
+  class KC idp;
+  class VAULT vault;
+  class MIRROR mirror;
+  class REPO,ROOT,PROJ,APPT,APPD gitops;
+  class MLB lb;
+  class TRAEFIK proxy;
+  class IRD,IRO,MERR,MAUTH crd;
+  class API,O2P app;
+  class SS,ES,ESO eso;
+  class SECRET,TLS secret;
 ```
 
-**Authentication flow (ForwardAuth + OIDC):**
+</details>
+
+**Legend** — 🟦 ingress/proxy (MetalLB·Traefik) · 🟪 Traefik CRDs (routes·middlewares) ·
+🟧 apps (oauth2-proxy·dashboard) · 🟩 External Secrets Operator · 🩷 Secrets ·
+🟦 GitOps (git·ArgoCD) · 🟨 Vault · 🟥 Keycloak · 🟢 internal mirror · ⬜ client/DNS.
+Solid arrows = request/data path · dotted = delivery, auth & references.
+**Air-gapped:** all charts, images and operators come from the **internal mirror**
+(no internet egress); MetalLB provides the on-prem LoadBalancer.
+
+<details>
+<summary><b>🔐 Authentication flow — ForwardAuth + OIDC (click to expand)</b></summary>
 
 ```mermaid
 sequenceDiagram
@@ -116,6 +227,8 @@ sequenceDiagram
     end
 ```
 
+</details>
+
 **Why each piece:**
 
 - **Traefik OSS has no native OIDC.** `oauth2-proxy` performs the OIDC exchange
@@ -145,14 +258,21 @@ manifests/                                 Kustomize base of the raw manifests
   oauth2-proxy/deployment.yaml             oauth2-proxy (keycloak-oidc provider)
   oauth2-proxy/service.yaml                Service :4180
   oauth2-proxy/trusted-ca-configmap.yaml   Trusted CA for the Keycloak cert (optional)
-  oauth2-proxy-sealedsecret.example.yaml   Sealed Secrets variant (secret in git)
   dashboard/middlewares.yaml               oauth-auth (ForwardAuth) + oauth-errors
   dashboard/ingressroute-oauth2.yaml       Route /oauth2/* → oauth2-proxy
   dashboard/ingressroute-dashboard.yaml    Route /dashboard + /api → api@internal
-secrets/oauth2-proxy-secret.example.yaml   Secret template (copy to oauth2-proxy-secret.yaml)
+  vault/                                   HashiCorp Vault + ESO (recommended secrets path)
+    serviceaccount.yaml                    SA for ESO → Vault (Kubernetes auth)
+    secretstore.yaml                       SecretStore → Vault (KV v2)
+    externalsecret-oauth2-proxy.yaml       ExternalSecret → oauth2-proxy-secret
+    externalsecret-dashboard-tls.yaml      ExternalSecret → traefik-dashboard-tls (optional)
+secrets/oauth2-proxy-secret.example.yaml   Secret template (out-of-band alternative)
+air-gapped/imagedigestmirrorset.example.yaml  Redirect image pulls to the internal registry
 docs/tls-secret.md                         How to create the traefik-dashboard-tls cert
+docs/vault-external-secrets.md             Vault + ESO setup (recommended secrets path)
+docs/air-gapped.md                         Disconnected/on-prem: mirror charts, images, operators
 keycloak/keycloak-client-setup.md          How to create the client in Keycloak
-metallb/ipaddresspool.example.yaml         MetalLB pool (optional)
+metallb/ipaddresspool.example.yaml         MetalLB pool (on-prem LoadBalancer)
 install.sh                                 Imperative deployment (ArgoCD alternative)
 README.md                                  This manual
 ```
@@ -172,10 +292,13 @@ README.md                                  This manual
 | **MetalLB Operator** with a pool | `oc get ipaddresspools -A` |
 | **Keycloak** reachable over HTTPS | open its console |
 | Permission to create namespaces + CRDs | `cluster-admin` or equivalent |
-| Manageable DNS for `traefik.apps.example.com` | will point to the MetalLB IP |
+| Manageable **internal** DNS for `traefik.apps.example.com` | will point to the MetalLB IP |
 | For GitOps: **ArgoCD ≥ 2.6** (OpenShift GitOps ≥ 1.8) | multi-source + managedNamespaceMetadata |
+| **Air-gapped:** internal image registry + Helm/OCI mirror | see [§10](#10-air-gapped--disconnected-on-prem) / `docs/air-gapped.md` |
+| **Air-gapped:** MetalLB & External Secrets Operators mirrored to a disconnected catalog | `oc-mirror` |
 
 > No MetalLB pool yet? Edit and apply `metallb/ipaddresspool.example.yaml`.
+> On a disconnected cluster, **mirror everything first** — see §10.
 
 ---
 
@@ -236,9 +359,8 @@ In `secrets/oauth2-proxy-secret.yaml` fill in:
 - `OAUTH2_PROXY_COOKIE_SECRET` → the string generated above.
 
 > **Do not** commit `secrets/oauth2-proxy-secret.yaml` (already in `.gitignore`).
-> To keep it in git safely and let ArgoCD manage it, use Sealed Secrets or
-> External Secrets (see §GitOps below) and add the resource to
-> `manifests/kustomization.yaml`.
+> The recommended alternative keeps **no secret in git**: HashiCorp Vault + the
+> External Secrets Operator — see §9.1 and `docs/vault-external-secrets.md`.
 
 ### 4.3 Dashboard TLS certificate
 
@@ -499,16 +621,24 @@ Operational detail in [`argocd/README.md`](argocd/README.md). Key design points:
 
 ### 9.1 Secrets in GitOps
 
-`oauth2-proxy-secret` and `traefik-dashboard-tls` are **not** in git (they go
-out-of-band, see §4.2 and §4.3). ArgoCD doesn't touch or prune them (not tracked).
-To keep them in git safely and let ArgoCD manage them, pick a path and add the
-resource to `manifests/kustomization.yaml`:
+By default `oauth2-proxy-secret` and `traefik-dashboard-tls` are **not** in git
+(they go out-of-band, see §4.2 and §4.3). ArgoCD doesn't touch or prune them.
+
+**Recommended: HashiCorp Vault via the External Secrets Operator (ESO).** No
+secret material in git — you store the values in Vault, and ESO materializes the
+Kubernetes Secrets from `ExternalSecret` references that ArgoCD manages. Manifests
+are in [`manifests/vault/`](manifests/vault/); full setup (Vault KV, Kubernetes
+auth, policy/role, internal-vs-external) in
+[`docs/vault-external-secrets.md`](docs/vault-external-secrets.md). Enable the
+`vault/` block in `manifests/kustomization.yaml` and drop the out-of-band step.
+
+Other backends work the same way (swap the store):
 
 | Option | How |
 |---|---|
-| **Sealed Secrets** (Bitnami) | `kubeseal` encrypts the Secret → `SealedSecret` in git; the controller decrypts it in-cluster. Template in `manifests/oauth2-proxy-sealedsecret.example.yaml`. |
-| **External Secrets Operator** | An `ExternalSecret` in git references a backend (Vault, AWS/GCP SM…). |
+| **Vault + ESO** (recommended here) | `SecretStore` → Vault (KV v2, Kubernetes auth) + `ExternalSecret` → `oauth2-proxy-secret`. See `manifests/vault/`. |
 | **cert-manager** (TLS only) | The `Certificate` (see `docs/tls-secret.md`) lives in git; cert-manager creates the Secret. |
+| **Sealed Secrets** (Bitnami) | `kubeseal` encrypts the Secret → `SealedSecret` in git; the controller decrypts it in-cluster. |
 
 ### 9.2 Built-in hardening
 
@@ -517,8 +647,64 @@ resource to `manifests/kustomization.yaml`:
   repo + the Traefik chart), `destinations` (only the `traefik` namespace) and
   the allowed cluster-scoped resources (Namespace, CRDs, ClusterRole/Binding,
   IngressClass). Apply it before the root-app (see `argocd/README.md` §3).
-- **Sealed Secrets** to put the secret in git (§9.1): template in
-  `manifests/oauth2-proxy-sealedsecret.example.yaml`.
+- **HashiCorp Vault + External Secrets Operator** so no secret material lives in
+  git (§9.1): manifests in `manifests/vault/`, guide in
+  `docs/vault-external-secrets.md`.
 
 Also recommended: pin `targetRevision` to a **tag** (not `main`) for reproducible
 releases.
+
+---
+
+## 10. Air-gapped / disconnected (on-prem)
+
+This solution targets a **disconnected OpenShift Container Platform** cluster:
+**no host or workload can reach the internet.** Everything is pulled from
+**internal mirrors**. Full procedure in [`docs/air-gapped.md`](docs/air-gapped.md);
+summary of what changes vs a connected cluster:
+
+| Concern | Connected | Air-gapped (this repo) |
+|---|---|---|
+| **LoadBalancer** | cloud LB | **MetalLB** (already used) — on-prem L2/BGP |
+| **Traefik Helm chart** | `https://traefik.github.io/charts` | mirrored to an **internal Helm/OCI registry**; `argocd/apps/traefik.yaml` `repoURL` points there |
+| **Container images** (traefik, oauth2-proxy) | docker.io / quay.io | mirrored to the **internal registry**; redirected transparently with an **ImageDigestMirrorSet** (`air-gapped/imagedigestmirrorset.example.yaml`) |
+| **Operators** (MetalLB, External Secrets) | OperatorHub online | **disconnected OperatorHub** — mirrored catalog + `ImageContentSourcePolicy`/`IDMS` (`oc-mirror`) |
+| **Keycloak / Vault / DNS** | may be external | **internal / on-prem** |
+| **TLS** | ACME / Let's Encrypt | **internal CA** or manual cert — ACME needs internet, so it is **not** used |
+| **ArgoCD repo** | GitHub | your **internal Git** (Gitea/GitLab/BitBucket on-prem) |
+
+What you must do before installing (see `docs/air-gapped.md`):
+
+1. **Mirror images** to your registry and apply the `ImageDigestMirrorSet` so
+   upstream refs resolve to the mirror (no manifest edits needed at pull time).
+2. **Mirror the Traefik chart** to an internal Helm/OCI repo and set the chart
+   `repoURL` in `argocd/apps/traefik.yaml`.
+3. **Mirror the Operators** (MetalLB, External Secrets) into a disconnected
+   catalog with `oc-mirror`, and install them from there.
+4. Point `repoURL` in all `argocd/*.yaml` to your **internal Git**.
+5. Provision TLS from an **internal CA** (`docs/tls-secret.md`, options B/C or an
+   internal-issuer cert-manager) — **not** ACME.
+
+> The CI in `.github/workflows/ci.yml` runs on a connected CI host (it downloads
+> `kustomize`/`kubeconform`) and only lints/validates — it never touches the
+> air-gapped cluster, so it needs no mirror.
+
+---
+
+## Contributing & community
+
+Contributions are very welcome — especially **real-cluster validation**, since
+this repo hasn't been tested live yet.
+
+- 📖 [`CONTRIBUTING.md`](CONTRIBUTING.md) — local checks, ground rules, PR flow.
+- 🤝 [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) — Contributor Covenant v2.1.
+- 🔐 [`SECURITY.md`](SECURITY.md) — how to report vulnerabilities privately.
+- 🐛 Open a [bug report or feature request](https://github.com/nubenetes/traefik-keycloak-openshift-gitops/issues/new/choose).
+
+Every push and pull request runs CI (`.github/workflows/ci.yml`): `yamllint`,
+`kustomize build`, `kubeconform` schema validation and `shellcheck`.
+
+## License
+
+Released under the [MIT License](LICENSE).
+
