@@ -696,6 +696,7 @@ What you must do before installing (see `docs/air-gapped.md`):
 Contributions are very welcome — especially **real-cluster validation**, since
 this repo hasn't been tested live yet.
 
+- 📝 [`CHANGELOG.md`](CHANGELOG.md) — notable changes per release (Keep a Changelog).
 - 📖 [`CONTRIBUTING.md`](CONTRIBUTING.md) — local checks, ground rules, PR flow.
 - 🤝 [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) — Contributor Covenant v2.1.
 - 🔐 [`SECURITY.md`](SECURITY.md) — how to report vulnerabilities privately.
