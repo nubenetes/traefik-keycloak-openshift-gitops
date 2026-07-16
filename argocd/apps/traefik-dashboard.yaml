@@ -1,0 +1,36 @@
+# =============================================================================
+# ArgoCD Application — protected dashboard (oauth2-proxy + middlewares + routes).
+#
+# Sync-wave 1: syncs AFTER the 'traefik' Application (wave 0), which already
+# installed the traefik.io CRDs and created the namespace. Renders the Kustomize
+# base under manifests/.
+#
+# Secrets NOT managed here (created out-of-band, see README):
+#   - oauth2-proxy-secret     (Keycloak client secret + cookie secret)
+#   - traefik-dashboard-tls   (TLS cert for the dashboard host)
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: traefik-dashboard
+  namespace: argocd            # <<< namespace where ArgoCD runs (OpenShift GitOps: openshift-gitops)
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: traefik          # dedicated AppProject (argocd/project.yaml)
+  source:
+    repoURL: https://github.com/nubenetes/traefik-keycloak-openshift-gitops.git
+    targetRevision: main                                        # <<< branch/tag
+    path: manifests                                             # Kustomize base
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: traefik
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      # Don't dry-run against CRDs that might not exist yet (ordering resilience).
+      - SkipDryRunOnMissingResource=true

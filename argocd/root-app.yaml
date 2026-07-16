@@ -1,0 +1,34 @@
+# =============================================================================
+# ArgoCD "App of Apps" — single entry point of the GitOps deployment.
+#
+# Applied ONCE by hand (or from the ArgoCD UI):
+#   oc apply -n <argocd-ns> -f argocd/root-app.yaml
+#
+# From there, ArgoCD reads the argocd/apps/ directory and manages the two child
+# Applications (traefik and traefik-dashboard) by sync-waves. Everything else
+# reconciles itself from git.
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: traefik-root
+  namespace: argocd            # <<< namespace where ArgoCD runs (OpenShift GitOps: openshift-gitops)
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io   # cascade delete when the Application is removed
+spec:
+  # The root-app creates Applications in the ArgoCD namespace, so it stays in
+  # 'default'. The child Applications DO use the dedicated 'traefik' AppProject.
+  project: default
+  source:
+    repoURL: https://github.com/nubenetes/traefik-keycloak-openshift-gitops.git
+    targetRevision: main                                        # <<< branch/tag
+    path: argocd/apps        # contains traefik.yaml and traefik-dashboard.yaml
+    directory:
+      recurse: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd          # <<< where the child Applications are created
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

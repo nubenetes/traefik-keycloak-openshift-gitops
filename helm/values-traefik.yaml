@@ -1,0 +1,90 @@
+# =============================================================================
+# Traefik Helm values — OpenShift 4.20+ / MetalLB (LoadBalancer)
+# Chart: traefik/traefik  (requires Traefik >= v3.4 for statusRewrites in errors)
+# Install with:
+#   helm repo add traefik https://traefik.github.io/charts
+#   helm repo update
+#   helm upgrade --install traefik traefik/traefik \
+#     -n traefik -f helm/values-traefik.yaml
+# =============================================================================
+
+deployment:
+  replicas: 2
+
+# --- Exposure via MetalLB ---------------------------------------------------
+service:
+  type: LoadBalancer
+  annotations:
+    # Optional: pin the MetalLB pool (if you have several). Adjust the name.
+    # metallb.io/address-pool: traefik-pool
+    # Optional: request a specific IP from the pool.
+    # metallb.io/loadBalancerIPs: 192.168.1.240
+    {}
+
+# Internal ports > 1024 => Traefik does NOT need root (key on OpenShift).
+ports:
+  web:
+    port: 8000
+    exposedPort: 80
+    # Redirect all HTTP traffic to HTTPS.
+    redirectTo:
+      port: websecure
+  websecure:
+    port: 8443
+    exposedPort: 443
+    tls:
+      enabled: true
+
+# --- Dashboard --------------------------------------------------------------
+# Disable the dashboard IngressRoute the chart creates (it comes with NO auth).
+# We create ours in manifests/dashboard/ingressroute-dashboard.yaml with oauth2-proxy.
+ingressRoute:
+  dashboard:
+    enabled: false
+
+# Enable the internal API/dashboard (api@internal) so we can route to it.
+additionalArguments:
+  - "--api.dashboard=true"
+  # - "--log.level=DEBUG"   # uncomment to debug the auth flow
+
+# --- Providers --------------------------------------------------------------
+providers:
+  kubernetesCRD:
+    enabled: true
+    allowCrossNamespace: false      # everything lives in the traefik namespace
+  kubernetesIngress:
+    enabled: true                   # optional: in case you want classic Ingresses
+    allowExternalNameServices: false
+
+# --- Security compatible with OpenShift's restricted-v2 SCC -----------------
+# We do NOT pin runAsUser/runAsGroup/fsGroup: OpenShift injects a UID from the
+# namespace range. Pinning them would cause an SCC rejection.
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+# --- Logs / resources -------------------------------------------------------
+logs:
+  general:
+    level: INFO
+  access:
+    enabled: true
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 256Mi
+
+# The chart creates the ServiceAccount + RBAC (ClusterRole) needed to read
+# IngressRoute / Middleware / TraefikService. Nothing else to touch.

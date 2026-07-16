@@ -1,0 +1,23 @@
+# =============================================================================
+# OPTIONAL but recommended on OpenShift.
+# OpenShift automatically injects the cluster's trusted CA bundle into any
+# ConfigMap carrying this label, under the 'ca-bundle.crt' key.
+# Mount it in oauth2-proxy (see the commented volumes in deployment.yaml) and
+# point OAUTH2_PROXY_PROVIDER_CA_FILES to /etc/ssl/certs/ca-bundle.crt so it
+# trusts the Keycloak Route certificate.
+#
+# To enable it with ArgoCD: uncomment this entry in ../kustomization.yaml.
+#
+# NOTE: if the Keycloak Route uses the ingress router's default self-signed
+# cert, it may NOT be in this bundle. In that case add that CA to the cluster
+# trust (oc ... proxy/cluster trustedCA) or use a valid cert on the ingress.
+# For quick tests: OAUTH2_PROXY_SSL_INSECURE_SKIP_VERIFY=true.
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oauth2-proxy-trusted-ca
+  namespace: traefik
+  labels:
+    config.openshift.io/inject-trusted-cabundle: "true"
+# OpenShift fills in the ca-bundle.crt content automatically.

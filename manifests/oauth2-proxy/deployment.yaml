@@ -1,0 +1,143 @@
+# =============================================================================
+# oauth2-proxy — performs the OIDC flow against Keycloak.
+# Traefik queries it via ForwardAuth (/oauth2/auth) and redirects to /oauth2/sign_in.
+#
+# EDIT the 4 values marked with  <<< CHANGE:
+#   - OAUTH2_PROXY_OIDC_ISSUER_URL   -> your Keycloak host and realm
+#   - OAUTH2_PROXY_REDIRECT_URL      -> public dashboard host
+#   - OAUTH2_PROXY_COOKIE_DOMAINS    -> domain where the cookie lives
+#   - OAUTH2_PROXY_WHITELIST_DOMAINS -> same domain (allows the rd back)
+#
+# Keycloak >= 17 uses /realms/<realm> (no /auth). Legacy Keycloak: /auth/realms/<realm>
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oauth2-proxy
+  namespace: traefik
+  labels:
+    app: oauth2-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oauth2-proxy
+  template:
+    metadata:
+      labels:
+        app: oauth2-proxy
+    spec:
+      securityContext:                     # compatible with restricted-v2
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: oauth2-proxy
+          image: quay.io/oauth2-proxy/oauth2-proxy:v7.7.1
+          args:
+            - --http-address=0.0.0.0:4180
+          env:
+            # ---- Keycloak provider (OIDC) ------------------------------------
+            - name: OAUTH2_PROXY_PROVIDER
+              value: "keycloak-oidc"
+            - name: OAUTH2_PROXY_OIDC_ISSUER_URL
+              value: "https://keycloak.apps.example.com/realms/myrealm"   # <<< dummy: replace
+            - name: OAUTH2_PROXY_SCOPE
+              value: "openid email profile"
+            - name: OAUTH2_PROXY_EMAIL_DOMAINS
+              value: "*"
+            # ---- URLs / cookies ---------------------------------------------
+            - name: OAUTH2_PROXY_REDIRECT_URL
+              value: "https://traefik.apps.example.com/oauth2/callback"   # <<< dummy: replace
+            - name: OAUTH2_PROXY_COOKIE_DOMAINS
+              value: ".apps.example.com"                       # <<< dummy: replace
+            - name: OAUTH2_PROXY_WHITELIST_DOMAINS
+              value: ".apps.example.com"                       # <<< dummy: replace
+            - name: OAUTH2_PROXY_COOKIE_SECURE
+              value: "true"
+            - name: OAUTH2_PROXY_COOKIE_SAMESITE
+              value: "lax"
+            # ---- ForwardAuth mode -------------------------------------------
+            - name: OAUTH2_PROXY_REVERSE_PROXY
+              value: "true"
+            - name: OAUTH2_PROXY_SET_XAUTHREQUEST
+              value: "true"
+            - name: OAUTH2_PROXY_PASS_ACCESS_TOKEN
+              value: "true"
+            - name: OAUTH2_PROXY_SET_AUTHORIZATION_HEADER
+              value: "true"
+            - name: OAUTH2_PROXY_SKIP_PROVIDER_BUTTON
+              value: "true"          # goes straight to Keycloak with no intermediate page
+            - name: OAUTH2_PROXY_UPSTREAMS
+              value: "static://202"  # no real upstream: authenticate only
+            # ---- Role restriction --------------------------------------------
+            # Only users with the client role traefik-dashboard:traefik-admin.
+            # Create that role in Keycloak and assign it (see keycloak-client-setup.md).
+            # For a realm role instead of a client one, use just "traefik-admin".
+            - name: OAUTH2_PROXY_ALLOWED_ROLES
+              value: "traefik-dashboard:traefik-admin"
+            #
+            # ---- Trusting the Keycloak certificate (see README) --------------
+            # If Keycloak uses the default OpenShift router cert, oauth2-proxy
+            # will NOT trust it. Recommended option: mount the injected CA bundle
+            # (trusted-ca-configmap.yaml) and uncomment:
+            # - name: OAUTH2_PROXY_PROVIDER_CA_FILES
+            #   value: "/etc/ssl/certs/ca-bundle.crt"
+            # Testing-only alternative (insecure):
+            # - name: OAUTH2_PROXY_SSL_INSECURE_SKIP_VERIFY
+            #   value: "true"
+            #
+            # ---- Secrets (from the oauth2-proxy-secret Secret) ---------------
+            - name: OAUTH2_PROXY_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: oauth2-proxy-secret
+                  key: OAUTH2_PROXY_CLIENT_ID
+            - name: OAUTH2_PROXY_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: oauth2-proxy-secret
+                  key: OAUTH2_PROXY_CLIENT_SECRET
+            - name: OAUTH2_PROXY_COOKIE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: oauth2-proxy-secret
+                  key: OAUTH2_PROXY_COOKIE_SECRET
+          ports:
+            - name: http
+              containerPort: 4180
+          # volumeMounts:                       # <-- uncomment with the CA bundle
+          #   - name: trusted-ca
+          #     mountPath: /etc/ssl/certs
+          #     readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 4180
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: 4180
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+      # volumes:                                # <-- uncomment with the CA bundle
+      #   - name: trusted-ca
+      #     configMap:
+      #       name: oauth2-proxy-trusted-ca
+      #       items:
+      #         - key: ca-bundle.crt
+      #           path: ca-bundle.crt

@@ -1,0 +1,54 @@
+# =============================================================================
+# ArgoCD Application — Traefik (official chart) + its CRDs + namespace.
+#
+# Multi-source: the chart lives in the remote Helm repo and the values in THIS
+# git repo (the $values ref). This avoids duplicating helm/values-traefik.yaml.
+#
+# Sync-wave 0: syncs BEFORE traefik-dashboard (wave 1), because this Application
+# installs the CRDs (IngressRoute, Middleware, TraefikService) the other one
+# needs, and creates/labels the namespace.
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: traefik
+  namespace: argocd            # <<< namespace where ArgoCD runs (OpenShift GitOps: openshift-gitops)
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io   # cascade delete when the Application is removed
+spec:
+  project: traefik          # dedicated AppProject (argocd/project.yaml)
+  sources:
+    # 1) This git repo: only provides the values file (renders nothing).
+    - repoURL: https://github.com/nubenetes/traefik-keycloak-openshift-gitops.git
+      targetRevision: main                                       # <<< branch/tag
+      ref: values
+    # 2) Official Traefik chart, PINNED to a concrete version (GitOps determinism).
+    #    41.0.2 => Traefik v3.7.6 (satisfies the >= v3.4 requirement for statusRewrites).
+    #    Check versions: helm search repo traefik/traefik --versions
+    - repoURL: https://traefik.github.io/charts
+      chart: traefik
+      targetRevision: 41.0.2
+      helm:
+        valueFiles:
+          - $values/helm/values-traefik.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: traefik
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    # ArgoCD creates the namespace and adds the Pod Security Admission label.
+    # On OpenShift we do NOT pin runAsUser: the restricted-v2 SCC assigns a UID
+    # from the namespace range; all securityContexts are compatible with
+    # 'restricted', so no custom SCC is needed.
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: restricted
+    syncOptions:
+      - CreateNamespace=true
+      # Server-Side Apply: avoids the "metadata.annotations: Too long" error with
+      # Traefik's large CRDs (last-applied-configuration size limit).
+      - ServerSideApply=true

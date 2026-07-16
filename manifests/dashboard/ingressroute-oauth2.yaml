@@ -1,0 +1,21 @@
+# =============================================================================
+# Public oauth2-proxy route: /oauth2/* on the SAME host as the dashboard.
+# This is where /oauth2/start, /oauth2/callback, /oauth2/sign_in, etc. land.
+# Dummy host traefik.apps.example.com (the same on all 3 IngressRoutes). Replace it.
+# =============================================================================
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: oauth2-proxy
+  namespace: traefik
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`traefik.apps.example.com`) && PathPrefix(`/oauth2/`)
+      kind: Rule
+      services:
+        - name: oauth2-proxy
+          port: 4180
+  tls:
+    secretName: traefik-dashboard-tls
