@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `renovate.json` — Renovate tracks the Traefik Helm chart version (ArgoCD
+  Application + `install.sh`) and the oauth2-proxy image tag. GitHub Actions stay
+  with Dependabot (Renovate's actions manager disabled to avoid duplicate PRs).
+
 ## [0.1.1] - 2026-07-16
 
 ### Added

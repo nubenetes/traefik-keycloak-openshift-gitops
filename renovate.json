@@ -1,0 +1,53 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits"
+  ],
+  "timezone": "Europe/Madrid",
+  "schedule": ["before 6am on monday"],
+  "labels": ["dependencies"],
+  "prConcurrentLimit": 5,
+
+  "//": "GitHub Actions are handled by Dependabot (.github/dependabot.yml) to avoid duplicate PRs.",
+  "github-actions": { "enabled": false },
+
+  "//argocd": "Track the Traefik Helm chart version pinned in the ArgoCD Application.",
+  "argocd": {
+    "fileMatch": ["argocd/apps/.+\\.yaml$"]
+  },
+
+  "//kubernetes": "Track image tags in the raw Kubernetes manifests (oauth2-proxy).",
+  "kubernetes": {
+    "fileMatch": ["manifests/oauth2-proxy/deployment\\.yaml$"]
+  },
+
+  "//install.sh": "Track the same Traefik chart version hardcoded in install.sh (--version).",
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["^install\\.sh$"],
+      "matchStrings": ["--version (?<currentValue>\\S+)"],
+      "datasourceTemplate": "helm",
+      "depNameTemplate": "traefik",
+      "registryUrlTemplate": "https://traefik.github.io/charts"
+    }
+  ],
+
+  "packageRules": [
+    {
+      "matchDatasources": ["helm"],
+      "matchPackageNames": ["traefik"],
+      "groupName": "traefik chart (keep >= v3.4)"
+    },
+    {
+      "matchManagers": ["kubernetes"],
+      "groupName": "oauth2-proxy image"
+    },
+    {
+      "matchUpdateTypes": ["major"],
+      "addLabels": ["major-update"]
+    }
+  ]
+}
