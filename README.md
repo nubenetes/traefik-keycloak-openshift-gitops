@@ -692,6 +692,38 @@ What you must do before installing (see `docs/air-gapped.md`):
 
 ---
 
+## Dependency updates
+
+Automated so the pinned versions don't rot:
+
+- **Renovate** (`renovate.json`) updates the **Traefik Helm chart** version (in
+  `argocd/apps/traefik.yaml` and `install.sh`) and the **oauth2-proxy image** tag
+  (`manifests/oauth2-proxy/deployment.yaml`). Grouped PRs, weekly, `dependencies`
+  label, major updates flagged. Keep Traefik **≥ v3.4**.
+- **Dependabot** (`.github/dependabot.yml`) updates the **GitHub Actions** used by
+  CI. Renovate's own actions manager is disabled to avoid duplicate PRs.
+
+Both run on the **GitHub side** (they need internet) — unrelated to the
+air-gapped cluster.
+
+### Enable Renovate (one-time)
+
+`renovate.json` does nothing until the Renovate GitHub App is installed:
+
+1. Open <https://github.com/apps/renovate> → **Install**.
+2. Choose the `nubenetes` org and select this repository (or "All repositories").
+3. Merge the **"Configure Renovate"** onboarding PR it opens — it summarizes what
+   it detected from `renovate.json`.
+
+After that, Renovate raises update PRs on its schedule (Mondays, early). To tune
+frequency/grouping, edit `renovate.json` (see the
+[Renovate docs](https://docs.renovatebot.com/configuration-options/)).
+
+**Dependabot** needs no app install — it is active as soon as
+`.github/dependabot.yml` is on the default branch (already the case).
+
+---
+
 ## Contributing & community
 
 Contributions are very welcome — especially **real-cluster validation**, since
