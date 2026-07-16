@@ -11,10 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-07-16
+
 ### Added
 - `renovate.json` — Renovate tracks the Traefik Helm chart version (ArgoCD
   Application + `install.sh`) and the oauth2-proxy image tag. GitHub Actions stay
   with Dependabot (Renovate's actions manager disabled to avoid duplicate PRs).
+- README: "Dependency updates" section with Renovate one-time setup steps, and a
+  Renovate badge.
 
 ## [0.1.1] - 2026-07-16
 
@@ -54,6 +58,7 @@ Initial reference release.
 ### Notes
 - Not yet validated on a live cluster (see the disclaimer above).
 
-[Unreleased]: https://github.com/nubenetes/traefik-keycloak-openshift-gitops/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/nubenetes/traefik-keycloak-openshift-gitops/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/nubenetes/traefik-keycloak-openshift-gitops/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/nubenetes/traefik-keycloak-openshift-gitops/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/nubenetes/traefik-keycloak-openshift-gitops/releases/tag/v0.1.0
