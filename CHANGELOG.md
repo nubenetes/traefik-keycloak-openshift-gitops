@@ -11,10 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-07-16
+
 ### Added
-- CI workflow (`.github/workflows/ci.yml`: yamllint + kustomize build +
-  kubeconform + shellcheck). Pending — requires the token `workflow` OAuth scope
-  to be pushed.
+- CI workflow (`.github/workflows/ci.yml`): yamllint + kustomize build +
+  kubeconform + shellcheck, on every push and pull request.
 - Repo hygiene: `.gitattributes` (LF normalization), `.editorconfig`,
   `.github/CODEOWNERS`, `.github/FUNDING.yml`, `.github/dependabot.yml`
   (GitHub Actions updates).
@@ -48,5 +49,6 @@ Initial reference release.
 ### Notes
 - Not yet validated on a live cluster (see the disclaimer above).
 
-[Unreleased]: https://github.com/nubenetes/traefik-keycloak-openshift-gitops/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/nubenetes/traefik-keycloak-openshift-gitops/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/nubenetes/traefik-keycloak-openshift-gitops/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/nubenetes/traefik-keycloak-openshift-gitops/releases/tag/v0.1.0
