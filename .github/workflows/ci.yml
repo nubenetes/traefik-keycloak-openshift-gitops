@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint-and-validate:
+    name: Lint & validate manifests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install kustomize & kubeconform
+        run: |
+          set -euo pipefail
+          curl -sfL "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+          sudo install -m 0755 kustomize /usr/local/bin/kustomize
+          curl -sfL "https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz" | tar -xz kubeconform
+          sudo install -m 0755 kubeconform /usr/local/bin/kubeconform
+          kustomize version
+          kubeconform -v
+
+      - name: yamllint
+        run: |
+          pip install --quiet yamllint
+          yamllint .
+
+      - name: Kustomize build (manifests/)
+        run: kustomize build manifests/ | tee rendered.yaml
+
+      - name: Validate rendered manifests (kubeconform)
+        # CRDs (IngressRoute, Middleware) have no public schema -> ignore-missing-schemas.
+        run: kubeconform -ignore-missing-schemas -summary rendered.yaml
+
+      - name: Validate ArgoCD & Vault/ESO manifests (kubeconform)
+        run: |
+          kubeconform -ignore-missing-schemas -summary \
+            argocd/project.yaml argocd/root-app.yaml argocd/apps/*.yaml \
+            manifests/vault/*.yaml \
+            secrets/oauth2-proxy-secret.example.yaml
+
+      - name: ShellCheck (install.sh)
+        run: shellcheck install.sh
