@@ -11,6 +11,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-07-17
+
+### Fixed
+- `helm/values-traefik.yaml` did not validate against the pinned Traefik chart
+  `41.0.2` (install would fail). Corrected the keys to the current chart schema:
+  `logs.*` → `log.level` + `accessLog.enabled`; `ports.web.redirectTo` →
+  `ports.web.http.redirections.entryPoint`; `ports.websecure.tls` →
+  `ports.websecure.http.tls`.
+- Pod UID was pinned despite the README/comment claiming otherwise. Chart `41.0.2`
+  defaults `podSecurityContext.runAsUser`/`runAsGroup` to `65532` and Helm's
+  deep-merge kept them, so the Traefik pod would be rejected by OpenShift's
+  `restricted-v2` SCC (`CreateContainerConfigError`). Added explicit
+  `runAsUser: null` / `runAsGroup: null` to delete the chart defaults.
+
+### Changed
+- CI: bump `actions/checkout` from v4 to v7 (Dependabot).
+
+### Notes
+- Still **AI-generated and not tested or validated on a live OpenShift/ArgoCD
+  cluster**. The fixes above were verified with `helm template` against chart
+  `41.0.2` (renders cleanly, pod `securityContext` no longer pins the UID, and the
+  HTTP→HTTPS redirect / websecure TLS / access log are still emitted) — but not
+  applied to a running cluster.
+
 ## [0.1.3] - 2026-07-17
 
 ### Changed
@@ -70,7 +94,8 @@ Initial reference release.
 ### Notes
 - Not yet validated on a live cluster (see the disclaimer above).
 
-[Unreleased]: https://github.com/nubenetes/traefik-keycloak-openshift-gitops/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/nubenetes/traefik-keycloak-openshift-gitops/compare/v0.1.4...HEAD
+[0.1.4]: https://github.com/nubenetes/traefik-keycloak-openshift-gitops/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/nubenetes/traefik-keycloak-openshift-gitops/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/nubenetes/traefik-keycloak-openshift-gitops/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/nubenetes/traefik-keycloak-openshift-gitops/compare/v0.1.0...v0.1.1
