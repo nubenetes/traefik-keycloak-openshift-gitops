@@ -58,6 +58,24 @@ Reference deployment of the **official Traefik Helm chart** exposed through
 Keycloak** via **oauth2-proxy + ForwardAuth** and **restricted by role**
 (`traefik-admin`).
 
+**What's included:**
+
+- **Traefik** (official chart `41.0.2` = Traefik `v3.7.6`) with the internal
+  API/dashboard, exposed via **MetalLB**. ([§1](#1-architecture))
+- **Keycloak SSO** — oauth2-proxy performs the OIDC exchange; Traefik gates the
+  dashboard through a `ForwardAuth` middleware (`errors` 401→302), restricted to
+  the `traefik-admin` role. ([§1](#1-architecture), [§4](#4-configuration))
+- **Secrets from HashiCorp Vault** via the **External Secrets Operator** — no
+  secret material in git. ([`docs/vault-external-secrets.md`](docs/vault-external-secrets.md))
+- **TLS** from **cert-manager** or an internal CA (no ACME/Let's Encrypt).
+  ([`docs/tls-secret.md`](docs/tls-secret.md))
+- **Air-gapped / disconnected**: `ImageDigestMirrorSet` + internal mirrors for
+  charts, images and Operators. ([§10](#10-air-gapped--disconnected-on-prem))
+- **GitOps with ArgoCD** — App-of-Apps, dedicated AppProject, sync-waves,
+  server-side apply. ([§9](#9-gitops-with-argocd))
+- **OpenShift-native security** — compatible with the `restricted-v2` SCC (no
+  pinned pod UID) and PodSecurity `restricted`, no custom SCC. ([§8](#8-operations--troubleshooting))
+
 > 🏢🔌 **Target platform: on-premises, disconnected (air-gapped) OpenShift
 > Container Platform (OCP 4.20+).** There is **no internet egress** — hence
 > **MetalLB** for load-balancing (no cloud LoadBalancer), and **internal mirrors**

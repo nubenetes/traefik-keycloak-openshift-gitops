@@ -27,6 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - CI: bump `actions/checkout` from v4 to v7 (Dependabot).
+- README: added a scannable **"What's included"** overview to the intro (Traefik,
+  Keycloak SSO, Vault/ESO secrets, TLS, air-gap, GitOps, SCC security) with links
+  to the relevant sections.
 
 ### Notes
 - Still **AI-generated and not tested or validated on a live OpenShift/ArgoCD
