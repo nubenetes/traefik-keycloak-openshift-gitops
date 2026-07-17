@@ -34,14 +34,19 @@ ports:
   web:
     port: 8000
     exposedPort: 80
-    # Redirect all HTTP traffic to HTTPS.
-    redirectTo:
-      port: websecure
+    # Redirect all HTTP traffic to HTTPS (chart 41.0.2 schema).
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
   websecure:
     port: 8443
     exposedPort: 443
-    tls:
-      enabled: true
+    http:
+      tls:
+        enabled: true
 
 # --- Dashboard --------------------------------------------------------------
 # Disable the dashboard IngressRoute the chart creates (it comes with NO auth).
@@ -67,7 +72,14 @@ providers:
 # --- Security compatible with OpenShift's restricted-v2 SCC -----------------
 # We do NOT pin runAsUser/runAsGroup/fsGroup: OpenShift injects a UID from the
 # namespace range. Pinning them would cause an SCC rejection.
+#
+# The explicit nulls below are REQUIRED: chart 41.0.2 defaults
+# podSecurityContext.runAsUser/runAsGroup to 65532, and Helm's deep-merge keeps
+# them unless we delete them with null. Without this the pod ships UID 65532 and
+# restricted-v2 rejects it (CreateContainerConfigError).
 podSecurityContext:
+  runAsUser: null
+  runAsGroup: null
   runAsNonRoot: true
   seccompProfile:
     type: RuntimeDefault
@@ -81,11 +93,12 @@ securityContext:
       - ALL
 
 # --- Logs / resources -------------------------------------------------------
-logs:
-  general:
-    level: INFO
-  access:
-    enabled: true
+# Chart 41.0.2 schema: top-level `log` and `accessLog` (the old `logs.*` block
+# was silently ignored and failed values-schema validation).
+log:
+  level: INFO
+accessLog:
+  enabled: true
 
 resources:
   requests:
