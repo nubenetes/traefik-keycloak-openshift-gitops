@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-07-17
+
+### Changed
+- README: the architecture diagram legend is now a table (one group per row)
+  instead of a single run-on paragraph, which rendered as an unreadable wall of
+  text. Each group also lists the diagram nodes it covers.
+
+### Fixed
+- README: the legend used 🟦 for both "ingress/proxy" and "GitOps", so the two
+  groups were indistinguishable. GitOps now uses 🔁, matching the emoji already
+  on its subgraph in the diagram.
+
 ## [0.1.2] - 2026-07-16
 
 ### Added
@@ -58,7 +70,8 @@ Initial reference release.
 ### Notes
 - Not yet validated on a live cluster (see the disclaimer above).
 
-[Unreleased]: https://github.com/nubenetes/traefik-keycloak-openshift-gitops/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/nubenetes/traefik-keycloak-openshift-gitops/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/nubenetes/traefik-keycloak-openshift-gitops/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/nubenetes/traefik-keycloak-openshift-gitops/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/nubenetes/traefik-keycloak-openshift-gitops/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/nubenetes/traefik-keycloak-openshift-gitops/releases/tag/v0.1.0

@@ -188,10 +188,23 @@ flowchart TB
 
 </details>
 
-**Legend** — 🟦 ingress/proxy (MetalLB·Traefik) · 🟪 Traefik CRDs (routes·middlewares) ·
-🟧 apps (oauth2-proxy·dashboard) · 🟩 External Secrets Operator · 🩷 Secrets ·
-🟦 GitOps (git·ArgoCD) · 🟨 Vault · 🟥 Keycloak · 🟢 internal mirror · ⬜ client/DNS.
-Solid arrows = request/data path · dotted = delivery, auth & references.
+**Legend**
+
+| | Group | What it covers |
+|---|---|---|
+| 🟦 | Ingress / proxy | MetalLB · Traefik |
+| 🟪 | Traefik CRDs | IngressRoutes · middlewares |
+| 🟧 | Apps | oauth2-proxy · dashboard |
+| 🟩 | External Secrets Operator | SecretStore · ExternalSecret · controller |
+| 🩷 | Secrets | materialized in-cluster |
+| 🔁 | GitOps | git repo · ArgoCD |
+| 🟨 | Vault | HashiCorp Vault · KV v2 |
+| 🟥 | Keycloak | OIDC IdP |
+| 🟢 | Internal mirror | image registry + Helm/OCI |
+| ⬜ | Client / DNS | browser · DNS record |
+
+**Arrows:** solid = request/data path · dotted = delivery, auth & references.
+
 **Air-gapped:** all charts, images and operators come from the **internal mirror**
 (no internet egress); MetalLB provides the on-prem LoadBalancer.
 
