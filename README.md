@@ -89,8 +89,82 @@ Ships two delivery paths that share the same manifests and values:
 - **GitOps with ArgoCD** (recommended): `argocd/` — App-of-Apps pattern.
 - **Imperative** (no ArgoCD): `install.sh`.
 
+<a id="quick-navigation-map"></a>
+## 🗺️ Quick Navigation Map
+
+This enterprise repository provides an end-to-end, production-ready GitOps architecture for deploying the official **Traefik Ingress Controller (v3.7+)** on **on-premises, air-gapped Red Hat OpenShift 4.20+**, with the Traefik dashboard secured by **Red Hat Build of Keycloak (RHBK) OIDC** via **oauth2-proxy** and **ForwardAuth**. Use this map to navigate the platform blueprint, declarative manifests, and multimedia guides:
+
+### 🧭 Repository Architecture Blueprint
+```text
+traefik-keycloak-openshift-gitops/        # 🚀 Air-Gapped Traefik & Keycloak GitOps Platform
+├── 📁 air-gapped/                       # Disconnected Mirroring & Image Redirection
+│   ├── 📄 imagedigestmirrorset.example.yaml # IDMS transparent image redirect to internal mirror
+│   └── 📄 mirror-images.sh              # Skopeo/oc-mirror batch image copying script
+├── 📁 argocd/                           # Declarative ArgoCD App-of-Apps & Application Manifests
+│   ├── 📄 app-of-apps.yaml              # Root App-of-Apps orchestrator across 5 sync waves
+│   └── 📁 apps/                         # Individual apps (MetalLB, External Secrets, Traefik, SSO)
+├── 📁 docs/                             # Exhaustive Engineering Architecture & Runbooks
+│   ├── 📄 air-gapped.md                 # Disconnected deployment guide (IDMS, mirrors, certs)
+│   ├── 📄 keycloak-setup.md             # Keycloak realm, OIDC client, and role mapping
+│   ├── 📄 tls-secret.md                 # Internal CA certificates and TLS secret provisioning
+│   └── 📄 vault-external-secrets.md     # HashiCorp Vault ESO SecretStore configuration
+├── 📁 helm/                             # Helm Chart Values & Overlays
+│   └── 📄 traefik-values.yaml           # Hardened Traefik Helm values (MetalLB, non-root SCC)
+├── 📁 keycloak/                         # Pre-Seeded Identity Configuration
+│   └── 📄 realm-export.json             # Keycloak realm definition with traefik-admin role
+├── 📁 manifests/                        # Core Kubernetes & OpenShift Manifests
+│   ├── 📁 oauth2-proxy/                 # oauth2-proxy Deployment, Service, and ConfigMap
+│   ├── 📁 traefik/                      # Traefik IngressRoutes and ForwardAuth Middleware
+│   └── 📁 security/                     # restricted-v2 SCC compliance manifests
+├── 📁 metallb/                          # On-Premises Load Balancing (Layer 2 / BGP)
+│   ├── 📄 ipaddresspool.yaml            # Virtual IP address pools for ingress exposure
+│   └── 📄 l2advertisement.yaml          # Layer 2 ARP advertisement configuration
+└── 📁 secrets/                          # Zero-Trust Secrets Synchronization
+    ├── 📄 external-secret-oauth2-proxy.yaml # ESO Vault sync for OIDC client secrets
+    └── 📄 external-secret-tls.yaml      # ESO Vault sync for internal TLS certificates
+```
+
+<a id="ai-multimedia-series"></a>
+## 🎬 AI-Generated Multimedia Series (YouTube)
+
+This repository is accompanied by an educational video masterclass and technical shorts synthesized with **Gemini NotebookLM** based directly on the air-gapped architecture blueprints, ForwardAuth security flows, and OpenShift 4.20+ GitOps runbooks from this project. All videos are freely accessible on YouTube on the [**@nubenetes**](https://youtube.com/@nubenetes) channel.
+
+> [!NOTE]
+> **Bilingual & Multilingual Learning Experience**:  
+> Content features sessions with original spoken audio in **English 🇺🇸** and **Spanish 🇪🇸**, with automated YouTube closed captions (CC) translated into **20+ languages** for global engineering teams.
+
+### 📽️ Full-Length Technical Deep Dives (Architecture Masterclasses)
+
+| # | Video Guide Title | Engineering Domain & Core Architecture | Audio | Duration | Direct Link |
+|:---:|:---|:---|:---:|:---:|:---:|
+| **01** | [OpenShift Desconectado](https://www.youtube.com/watch?v=zFJlstN_5Vc) | **Arquitectura Air-Gapped y Despliegue Desconectado**<br/>ImageDigestMirrorSet, espejos OCI internos y MetalLB en OpenShift 4.20+ | 🇪🇸 ES | `8:38` | [▶️ Watch](https://www.youtube.com/watch?v=zFJlstN_5Vc) |
+| **02** | [Air Gapped OpenShift 4.20](https://www.youtube.com/watch?v=2iBBbVQ2hgs) | **Air-Gapped Ingress Architecture & Keycloak SSO**<br/>Traefik v3 Helm, MetalLB LoadBalancer & oauth2-proxy ForwardAuth | 🇺🇸 EN | `7:28` | [▶️ Watch](https://www.youtube.com/watch?v=2iBBbVQ2hgs) |
+| **03** | [GitOps en OpenShift Desconectado](https://www.youtube.com/watch?v=cvgCPUqnwwQ) | **Entrega Continua Declarativa con ArgoCD**<br/>Patrón App-of-Apps, secuenciación con sync-waves y Kustomize | 🇪🇸 ES | `7:15` | [▶️ Watch](https://www.youtube.com/watch?v=cvgCPUqnwwQ) |
+| **04** | [OpenShift Aislado](https://www.youtube.com/watch?v=H8VQ8sEHlBU) | **Seguridad Zero-Trust en Redes Aisladas**<br/>HashiCorp Vault, External Secrets Operator y certificados TLS internos | 🇪🇸 ES | `7:47` | [▶️ Watch](https://www.youtube.com/watch?v=H8VQ8sEHlBU) |
+| **05** | [Air-Gapped OpenShift GitOps](https://www.youtube.com/watch?v=-JfF05AutFA) | **Air-Gapped GitOps Delivery & Sync Waves**<br/>Solving disconnected cluster dependencies via ordered ArgoCD waves | 🇺🇸 EN | `8:10` | [▶️ Watch](https://www.youtube.com/watch?v=-JfF05AutFA) |
+| **06** | [Air Gapped GitOps Traefik](https://www.youtube.com/watch?v=SFyFvU6UbK8) | **On-Premises MetalLB & OpenShift Hardening**<br/>Layer 2/BGP load balancing, restricted-v2 SCC & dynamic non-root UIDs | 🇺🇸 EN | `8:49` | [▶️ Watch](https://www.youtube.com/watch?v=SFyFvU6UbK8) |
+| **07** | [Securing Traefik Dashboard](https://www.youtube.com/watch?v=UrqBvpdwr4I) | **Zero-Trust Dashboard Security with Keycloak OIDC**<br/>ForwardAuth middleware, 401 redirect flow & traefik-admin RBAC | 🇺🇸 EN | `8:04` | [▶️ Watch](https://www.youtube.com/watch?v=UrqBvpdwr4I) |
+| **08** | [Air Gapped Traefik Masterclass](https://www.youtube.com/watch?v=T5I7HyjZsqU) | **End-to-End Production Reference Architecture**<br/>Complete Day 0 to Day 2 lifecycle for enterprise air-gapped ingress | 🇺🇸 EN | `9:08` | [▶️ Watch](https://www.youtube.com/watch?v=T5I7HyjZsqU) |
+
+### ⚡ Video Shorts Matrix
+
+| # | Short Title | Architectural Domain & Focus | Audio | Duration | Action |
+|:---:|:---|:---|:---:|:---:|:---:|
+| **01** | [Cómo ArgoCD orquesta dependencias complejas](https://www.youtube.com/shorts/vOAP50bVGRk) | **Orquestación Declarativa**<br/>Secuenciación con ArgoCD Sync Waves para evitar condiciones de carrera | 🇪🇸 ES | `1:19` | [▶️ Watch](https://www.youtube.com/shorts/vOAP50bVGRk) |
+| **02** | [Cómo Traefik Redirige Hacia Keycloak](https://www.youtube.com/shorts/TBkAAdcwoOQ) | **Seguridad Ingress y OIDC**<br/>Middleware ForwardAuth interceptando peticiones no autenticadas | 🇪🇸 ES | `1:10` | [▶️ Watch](https://www.youtube.com/shorts/TBkAAdcwoOQ) |
+| **03** | [Cómo un clúster aislado engaña a la nube](https://www.youtube.com/shorts/_SWMWEVFAtg) | **Arquitectura Desconectada**<br/>ImageDigestMirrorSet y MetalLB operando sin salida a Internet | 🇪🇸 ES | `1:22` | [▶️ Watch](https://www.youtube.com/shorts/_SWMWEVFAtg) |
+| **04** | [How Air Gapped OpenShift Clusters Deploy Traefik](https://www.youtube.com/shorts/4aRSUql0dyY) | **Disconnected Kubernetes**<br/>ImageDigestMirrorSet redirection & on-premises MetalLB load balancing | 🇺🇸 EN | `1:11` | [▶️ Watch](https://www.youtube.com/shorts/4aRSUql0dyY) |
+| **05** | [How Traefik ForwardAuth Secures Internal Dashboards](https://www.youtube.com/shorts/myelqRPIprw) | **Zero-Trust Ingress**<br/>Locking down admin dashboards via Keycloak OIDC & ForwardAuth | 🇺🇸 EN | `1:30` | [▶️ Watch](https://www.youtube.com/shorts/myelqRPIprw) |
+| **06** | [How ArgoCD Sequences Complex Deployments](https://www.youtube.com/shorts/hivMtpLDudE) | **GitOps Sequencing**<br/>Ordering Operators, Secrets, and Traefik using ArgoCD Sync Waves | 🇺🇸 EN | `1:26` | [▶️ Watch](https://www.youtube.com/shorts/hivMtpLDudE) |
+
+*For complete technical summaries, topic breakdowns, and direct studio links, see [Section 11: Video Walkthroughs & Architecture References](#11-video-walkthroughs--architecture-references-youtube).*
+
+---
+
 ## Table of contents
 
+- [Quick Navigation Map](#quick-navigation-map)
+- [AI-Generated Multimedia Series (YouTube)](#ai-multimedia-series)
 1. [Architecture](#1-architecture)
 2. [Repository layout](#2-repository-layout)
 3. [Prerequisites](#3-prerequisites)
@@ -101,6 +175,7 @@ Ships two delivery paths that share the same manifests and values:
 8. [Operations & troubleshooting](#8-operations--troubleshooting)
 9. [GitOps with ArgoCD](#9-gitops-with-argocd)
 10. [Air-gapped / disconnected (on-prem)](#10-air-gapped--disconnected-on-prem)
+11. [Video Walkthroughs & Architecture References (YouTube)](#11-video-walkthroughs--architecture-references-youtube)
 
 ---
 
@@ -720,6 +795,165 @@ What you must do before installing (see `docs/air-gapped.md`):
 > The CI in `.github/workflows/ci.yml` runs on a connected CI host (it downloads
 > `kustomize`/`kubeconform`) and only lints/validates — it never touches the
 > air-gapped cluster, so it needs no mirror.
+
+---
+
+## 11. Video Walkthroughs & Architecture References (YouTube)
+
+Architectural deep dives, video walkthroughs, and technical shorts for `traefik-keycloak-openshift-gitops`, air-gapped OpenShift 4.20+ deployments, Traefik Ingress, and Keycloak SSO are hosted on the **[Nubenetes YouTube Channel (@nubenetes)](https://www.youtube.com/@nubenetes)**.
+
+<details open>
+<summary>📂 <strong>Full-Length Technical Deep Dives (Architecture Masterclasses)</strong></summary>
+
+<br/>
+
+##### 1. OpenShift Desconectado: GitOps, Traefik y Keycloak en Entornos Air-Gapped
+- 🔗 **Direct Link**: [https://www.youtube.com/watch?v=zFJlstN_5Vc](https://www.youtube.com/watch?v=zFJlstN_5Vc)
+- 🌐 **Origin Language**: Spanish 🇪🇸 (Subtitles in 20+ languages)
+- ⏱️ **Duration**: 8:38
+- 🏷️ **Engineering Domain**: Arquitectura Air-Gapped, GitOps en OpenShift 4.20+ y Despliegue Desconectado
+- 📝 **Technical Overview**:
+Guía arquitectónica completa para desplegar Traefik v3 y Red Hat Build of Keycloak en entornos OpenShift 4.20+ totalmente desconectados (air-gapped) mediante GitOps y ArgoCD. Analiza cómo operar infraestructura empresarial crítica sin acceso a Internet, sustituyendo dependencias cloud por ImageDigestMirrorSet, registros internos OCI, balanceo con MetalLB y cumplimiento estricto de restricted-v2 SCC.
+- 🛠️ **Direct Links**: [Watch on YouTube](https://www.youtube.com/watch?v=zFJlstN_5Vc) | [Edit in YouTube Studio](https://studio.youtube.com/video/zFJlstN_5Vc/edit)
+
+##### 2. Air Gapped OpenShift 4.20: Traefik Ingress & Keycloak SSO GitOps Blueprint
+- 🔗 **Direct Link**: [https://www.youtube.com/watch?v=2iBBbVQ2hgs](https://www.youtube.com/watch?v=2iBBbVQ2hgs)
+- 🌐 **Origin Language**: English 🇺🇸 (Subtitles in 20+ languages)
+- ⏱️ **Duration**: 7:28
+- 🏷️ **Engineering Domain**: Air-Gapped Ingress Architecture, Traefik v3 & Keycloak OIDC Integration
+- 📝 **Technical Overview**:
+Architectural blueprint for deploying the official Traefik Helm chart on on-premises, air-gapped Red Hat OpenShift 4.20+ with Keycloak SSO protection via ArgoCD GitOps. Covers MetalLB LoadBalancing, internal image mirrors, oauth2-proxy ForwardAuth middleware, restricted-v2 SCC compliance, and syncing Vault secrets via External Secrets Operator.
+- 🛠️ **Direct Links**: [Watch on YouTube](https://www.youtube.com/watch?v=2iBBbVQ2hgs) | [Edit in YouTube Studio](https://studio.youtube.com/video/2iBBbVQ2hgs/edit)
+
+##### 3. GitOps en OpenShift Desconectado: Automatización con ArgoCD y Traefik
+- 🔗 **Direct Link**: [https://www.youtube.com/watch?v=cvgCPUqnwwQ](https://www.youtube.com/watch?v=cvgCPUqnwwQ)
+- 🌐 **Origin Language**: Spanish 🇪🇸 (Subtitles in 20+ languages)
+- ⏱️ **Duration**: 7:15
+- 🏷️ **Engineering Domain**: Entrega Continua Declarativa con ArgoCD App-of-Apps y Kustomize
+- 📝 **Technical Overview**:
+Estrategia avanzada de GitOps para clústeres Red Hat OpenShift en redes aisladas. Explica cómo estructurar repositorios con Kustomize base y overlays, orquestar dependencias complejas mediante ArgoCD Sync Waves (MetalLB, External Secrets, Traefik, oauth2-proxy) y eliminar la desviación de configuración con Server-Side Apply.
+- 🛠️ **Direct Links**: [Watch on YouTube](https://www.youtube.com/watch?v=cvgCPUqnwwQ) | [Edit in YouTube Studio](https://studio.youtube.com/video/cvgCPUqnwwQ/edit)
+
+##### 4. OpenShift Aislado: Seguridad Zero-Trust con Traefik, Keycloak y Vault
+- 🔗 **Direct Link**: [https://www.youtube.com/watch?v=H8VQ8sEHlBU](https://www.youtube.com/watch?v=H8VQ8sEHlBU)
+- 🌐 **Origin Language**: Spanish 🇪🇸 (Subtitles in 20+ languages)
+- ⏱️ **Duration**: 7:47
+- 🏷️ **Engineering Domain**: Seguridad Zero-Trust, External Secrets Operator y Vault en Redes Aisladas
+- 📝 **Technical Overview**:
+Arquitectura de seguridad Zero-Trust para aplicaciones críticas en clústeres OpenShift 4.20+ air-gapped. Aprende a proteger accesos administrativos al dashboard de Traefik con el rol traefik-admin en Keycloak, inyectar credenciales y certificados dinámicos desde HashiCorp Vault mediante ESO, y gestionar TLS con CA corporativa interna sin Let's Encrypt ni ACME.
+- 🛠️ **Direct Links**: [Watch on YouTube](https://www.youtube.com/watch?v=H8VQ8sEHlBU) | [Edit in YouTube Studio](https://studio.youtube.com/video/H8VQ8sEHlBU/edit)
+
+##### 5. Air-Gapped OpenShift GitOps: Declarative Traefik & Keycloak Architecture
+- 🔗 **Direct Link**: [https://www.youtube.com/watch?v=-JfF05AutFA](https://www.youtube.com/watch?v=-JfF05AutFA)
+- 🌐 **Origin Language**: English 🇺🇸 (Subtitles in 20+ languages)
+- ⏱️ **Duration**: 8:10
+- 🏷️ **Engineering Domain**: Air-Gapped GitOps Delivery, ArgoCD Sync Waves & On-Premises Mirrors
+- 📝 **Technical Overview**:
+Deep dive into declarative GitOps workflows for deploying production ingress and identity architectures on air-gapped Red Hat OpenShift 4.20+. Explores operating platforms with zero internet access, configuring ImageDigestMirrorSet and internal OCI mirrors, and sequencing multi-tier stack reconciliation across 5 distinct ArgoCD sync waves.
+- 🛠️ **Direct Links**: [Watch on YouTube](https://www.youtube.com/watch?v=-JfF05AutFA) | [Edit in YouTube Studio](https://studio.youtube.com/video/-JfF05AutFA/edit)
+
+##### 6. Air Gapped GitOps Traefik: MetalLB LoadBalancing & OpenShift Hardening
+- 🔗 **Direct Link**: [https://www.youtube.com/watch?v=SFyFvU6UbK8](https://www.youtube.com/watch?v=SFyFvU6UbK8)
+- 🌐 **Origin Language**: English 🇺🇸 (Subtitles in 20+ languages)
+- ⏱️ **Duration**: 8:49
+- 🏷️ **Engineering Domain**: On-Premises MetalLB L2/BGP, restricted-v2 SCC & ImageDigestMirrorSet
+- 📝 **Technical Overview**:
+Comprehensive engineering masterclass on networking and security hardening for Traefik Ingress on air-gapped Red Hat OpenShift 4.20+. Explains configuring on-premises MetalLB LoadBalancer services (IPAddressPool, L2Advertisement), adhering to restricted-v2 Security Context Constraints without root privileges, dynamic non-root UID allocation, and NetworkPolicy isolation.
+- 🛠️ **Direct Links**: [Watch on YouTube](https://www.youtube.com/watch?v=SFyFvU6UbK8) | [Edit in YouTube Studio](https://studio.youtube.com/video/SFyFvU6UbK8/edit)
+
+##### 7. Securing Traefik Dashboard: Keycloak SSO, oauth2-proxy & ForwardAuth
+- 🔗 **Direct Link**: [https://www.youtube.com/watch?v=UrqBvpdwr4I](https://www.youtube.com/watch?v=UrqBvpdwr4I)
+- 🌐 **Origin Language**: English 🇺🇸 (Subtitles in 20+ languages)
+- ⏱️ **Duration**: 8:04
+- 🏷️ **Engineering Domain**: Dashboard Security, Keycloak OIDC, oauth2-proxy & ForwardAuth Middleware
+- 📝 **Technical Overview**:
+End-to-end security guide for protecting the internal Traefik API and Web Dashboard using Keycloak OIDC, oauth2-proxy, and Traefik ForwardAuth middleware on OpenShift 4.20+. Details the risks of raw ingress API exposure, oauth2-proxy token exchange mechanics, 401 unauthenticated request redirection, and enforcing granular role-based authorization (traefik-admin).
+- 🛠️ **Direct Links**: [Watch on YouTube](https://www.youtube.com/watch?v=UrqBvpdwr4I) | [Edit in YouTube Studio](https://studio.youtube.com/video/UrqBvpdwr4I/edit)
+
+##### 8. Air Gapped Traefik Masterclass: Production Ingress on OpenShift 4.20+
+- 🔗 **Direct Link**: [https://www.youtube.com/watch?v=T5I7HyjZsqU](https://www.youtube.com/watch?v=T5I7HyjZsqU)
+- 🌐 **Origin Language**: English 🇺🇸 (Subtitles in 20+ languages)
+- ⏱️ **Duration**: 9:08
+- 🏷️ **Engineering Domain**: End-to-End Production Reference Architecture & Day 0-Day 2 Lifecycle
+- 📝 **Technical Overview**:
+The ultimate production engineering masterclass on deploying and operating Traefik with a Keycloak-protected dashboard on disconnected OpenShift 4.20+ clusters. Synthesizes MetalLB, Traefik v3, Keycloak, Vault External Secrets, and ArgoCD across the entire Day 0, Day 1, and Day 2 operational lifecycle, covering health checks, certificate renewals, chart upgrades, and disaster recovery.
+- 🛠️ **Direct Links**: [Watch on YouTube](https://www.youtube.com/watch?v=T5I7HyjZsqU) | [Edit in YouTube Studio](https://studio.youtube.com/video/T5I7HyjZsqU/edit)
+
+</details>
+
+<details open>
+<summary>📂 <strong>Technical Shorts Matrix & Architecture Breakdowns</strong></summary>
+
+<br/>
+
+### ⚡ Video Shorts Matrix
+
+| # | Short Title | Architectural Domain & Focus | Audio | Duration | Action |
+|:---:|:---|:---|:---:|:---:|:---:|
+| **01** | [Cómo ArgoCD orquesta dependencias complejas](https://www.youtube.com/shorts/vOAP50bVGRk) | **Orquestación Declarativa**<br/>Secuenciación con ArgoCD Sync Waves para evitar condiciones de carrera | 🇪🇸 ES | `1:19` | [▶️ Watch](https://www.youtube.com/shorts/vOAP50bVGRk) |
+| **02** | [Cómo Traefik Redirige Hacia Keycloak](https://www.youtube.com/shorts/TBkAAdcwoOQ) | **Seguridad Ingress y OIDC**<br/>Middleware ForwardAuth interceptando peticiones no autenticadas | 🇪🇸 ES | `1:10` | [▶️ Watch](https://www.youtube.com/shorts/TBkAAdcwoOQ) |
+| **03** | [Cómo un clúster aislado engaña a la nube](https://www.youtube.com/shorts/_SWMWEVFAtg) | **Arquitectura Desconectada**<br/>ImageDigestMirrorSet y MetalLB operando sin salida a Internet | 🇪🇸 ES | `1:22` | [▶️ Watch](https://www.youtube.com/shorts/_SWMWEVFAtg) |
+| **04** | [How Air Gapped OpenShift Clusters Deploy Traefik](https://www.youtube.com/shorts/4aRSUql0dyY) | **Disconnected Kubernetes**<br/>ImageDigestMirrorSet redirection & on-premises MetalLB load balancing | 🇺🇸 EN | `1:11` | [▶️ Watch](https://www.youtube.com/shorts/4aRSUql0dyY) |
+| **05** | [How Traefik ForwardAuth Secures Internal Dashboards](https://www.youtube.com/shorts/myelqRPIprw) | **Zero-Trust Ingress**<br/>Locking down admin dashboards via Keycloak OIDC & ForwardAuth | 🇺🇸 EN | `1:30` | [▶️ Watch](https://www.youtube.com/shorts/myelqRPIprw) |
+| **06** | [How ArgoCD Sequences Complex Deployments](https://www.youtube.com/shorts/hivMtpLDudE) | **GitOps Sequencing**<br/>Ordering Operators, Secrets, and Traefik using ArgoCD Sync Waves | 🇺🇸 EN | `1:26` | [▶️ Watch](https://www.youtube.com/shorts/hivMtpLDudE) |
+
+<br/>
+
+##### 1. Cómo ArgoCD orquesta dependencias complejas
+- 🔗 **Direct Link**: [https://www.youtube.com/shorts/vOAP50bVGRk](https://www.youtube.com/shorts/vOAP50bVGRk)
+- 🌐 **Origin Language**: Spanish 🇪🇸 (Subtitles in 20+ languages)
+- ⏱️ **Duration**: 1:19
+- 🏷️ **Engineering Domain**: Orquestación Declarativa, Sync Waves y App-of-Apps en OpenShift
+- 📝 **Technical Overview**:
+Cómo ArgoCD sincroniza dependencias complejas sin fallos en clústeres OpenShift. Explica cómo las Sync Waves dividen el despliegue en fases (Fase 1: MetalLB y operadores, Fase 2: CRDs y secretos de Vault, Fase 3: Traefik Ingress), verificando la salud de cada componente antes de avanzar para evitar condiciones de carrera.
+- 🛠️ **Direct Links**: [Watch Short](https://www.youtube.com/shorts/vOAP50bVGRk) | [Edit in YouTube Studio](https://studio.youtube.com/video/vOAP50bVGRk/edit)
+
+##### 2. Cómo Traefik Redirige Hacia Keycloak
+- 🔗 **Direct Link**: [https://www.youtube.com/shorts/TBkAAdcwoOQ](https://www.youtube.com/shorts/TBkAAdcwoOQ)
+- 🌐 **Origin Language**: Spanish 🇪🇸 (Subtitles in 20+ languages)
+- ⏱️ **Duration**: 1:10
+- 🏷️ **Engineering Domain**: Seguridad de Ingress, Middleware ForwardAuth y Autenticación OIDC
+- 📝 **Technical Overview**:
+Cómo Traefik y Keycloak protegen paneles administrativos con Single Sign-On (SSO). Detalla el middleware ForwardAuth interceptando peticiones no autenticadas (error 401), redirigiéndolas a Keycloak para inicio de sesión, y validando que el usuario pertenezca al rol traefik-admin antes de otorgar acceso.
+- 🛠️ **Direct Links**: [Watch Short](https://www.youtube.com/shorts/TBkAAdcwoOQ) | [Edit in YouTube Studio](https://studio.youtube.com/video/TBkAAdcwoOQ/edit)
+
+##### 3. Cómo un clúster aislado engaña a la nube
+- 🔗 **Direct Link**: [https://www.youtube.com/shorts/_SWMWEVFAtg](https://www.youtube.com/shorts/_SWMWEVFAtg)
+- 🌐 **Origin Language**: Spanish 🇪🇸 (Subtitles in 20+ languages)
+- ⏱️ **Duration**: 1:22
+- 🏷️ **Engineering Domain**: Arquitectura Desconectada, ImageDigestMirrorSet y MetalLB On-Premises
+- 📝 **Technical Overview**:
+Cómo desplegar aplicaciones cloud-native en clústeres OpenShift completamente aislados sin conexión a Internet. Explica el uso de ImageDigestMirrorSet para redirigir peticiones de imágenes a registros internos OCI sin tocar los manifiestos, y el balanceo local con MetalLB en centros de datos on-premises.
+- 🛠️ **Direct Links**: [Watch Short](https://www.youtube.com/shorts/_SWMWEVFAtg) | [Edit in YouTube Studio](https://studio.youtube.com/video/_SWMWEVFAtg/edit)
+
+##### 4. How Air Gapped OpenShift Clusters Deploy Traefik
+- 🔗 **Direct Link**: [https://www.youtube.com/shorts/4aRSUql0dyY](https://www.youtube.com/shorts/4aRSUql0dyY)
+- 🌐 **Origin Language**: English 🇺🇸 (Subtitles in 20+ languages)
+- ⏱️ **Duration**: 1:11
+- 🏷️ **Engineering Domain**: Disconnected Kubernetes, ImageDigestMirrorSet & MetalLB LoadBalancing
+- 📝 **Technical Overview**:
+How air-gapped OpenShift clusters deploy modern ingress controllers with zero internet egress. Details transparent container image redirection with ImageDigestMirrorSet and on-premises Layer 2/BGP virtual IP management with MetalLB without cloud load balancer dependencies.
+- 🛠️ **Direct Links**: [Watch Short](https://www.youtube.com/shorts/4aRSUql0dyY) | [Edit in YouTube Studio](https://studio.youtube.com/video/4aRSUql0dyY/edit)
+
+##### 5. How Traefik ForwardAuth Secures Internal Dashboards
+- 🔗 **Direct Link**: [https://www.youtube.com/shorts/myelqRPIprw](https://www.youtube.com/shorts/myelqRPIprw)
+- 🌐 **Origin Language**: English 🇺🇸 (Subtitles in 20+ languages)
+- ⏱️ **Duration**: 1:30
+- 🏷️ **Engineering Domain**: Zero-Trust Ingress, Keycloak OIDC, oauth2-proxy & ForwardAuth Middleware
+- 📝 **Technical Overview**:
+How Traefik ForwardAuth and Keycloak lock down internal admin dashboards with enterprise SSO. Explains the transparent request interception mechanism, seamless 401-to-302 OIDC redirects via oauth2-proxy, and enforcing role-based access restricted strictly to traefik-admin users.
+- 🛠️ **Direct Links**: [Watch Short](https://www.youtube.com/shorts/myelqRPIprw) | [Edit in YouTube Studio](https://studio.youtube.com/video/myelqRPIprw/edit)
+
+##### 6. How ArgoCD Sequences Complex Deployments
+- 🔗 **Direct Link**: [https://www.youtube.com/shorts/hivMtpLDudE](https://www.youtube.com/shorts/hivMtpLDudE)
+- 🌐 **Origin Language**: English 🇺🇸 (Subtitles in 20+ languages)
+- ⏱️ **Duration**: 1:26
+- 🏷️ **Engineering Domain**: GitOps Dependency Management, ArgoCD Sync Waves & App-of-Apps Pattern
+- 📝 **Technical Overview**:
+Why complex enterprise deployments crash in Kubernetes, and how ArgoCD Sync Waves fixes it. Details wave-based sequencing across infrastructure operators, Vault secrets, and Traefik ingress, ensuring prerequisite health before downstream components are reconciled.
+- 🛠️ **Direct Links**: [Watch Short](https://www.youtube.com/shorts/hivMtpLDudE) | [Edit in YouTube Studio](https://studio.youtube.com/video/hivMtpLDudE/edit)
+
+</details>
 
 ---
 
